@@ -81,7 +81,7 @@ module Aws
     # Amazon EC2 Instance Types : http://www.amazon.com/b?ie=UTF8&node=370375011
     # Default EC2 instance type (platform)
     DEFAULT_INSTANCE_TYPE   =  'm1.small'
-    INSTANCE_TYPES          = ['m1.small','c1.medium','m1.large','m1.xlarge','c1.xlarge']
+    INSTANCE_TYPES          = ['t1.micro', 'm1.small','c1.medium','m1.large','m1.xlarge','c1.xlarge']
 
     @@bench = AwsBenchmarkingBlock.new
     def self.bench_xml
@@ -186,7 +186,10 @@ module Aws
       params.each do |list_by, list|
         request_hash.merge! hash_params(list_by, list.to_a)
       end
-      request_hash['ImageType'] = image_type if image_type
+      if image_type
+        request_hash['Filter.1.Name'] = "image-type"
+        request_hash['Filter.1.Value.1'] = image_type
+      end
       link = generate_request("DescribeImages", request_hash)
       request_cache_or_info cache_for, link,  QEc2DescribeImagesParser, @@bench, cache_for
     rescue Exception
@@ -1433,6 +1436,8 @@ module Aws
       def tagend(name)
         case name
           when 'imageId'       then @image[:aws_id]       = @text
+          when 'name'          then @image[:aws_name]     = @text
+          when 'description'    then @image[:aws_description] = @text
           when 'imageLocation' then @image[:aws_location] = @text
           when 'imageState'    then @image[:aws_state]    = @text
           when 'imageOwnerId'  then @image[:aws_owner]    = @text
